@@ -1,4 +1,4 @@
-package com.pinelab.llamakt
+package org.pinelang.llamakt
 
 class LLM {
 

@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.pinelab.llammakt"
+    namespace = "org.pinelang.llammakt"
     compileSdk = 34
 
     defaultConfig {
@@ -14,7 +14,6 @@ android {
         consumerProguardFiles("consumer-rules.pro")
         externalNativeBuild {
             cmake {
-                cppFlags("")
                 arguments("-DBUILD_SHARED_LIBS=ON","-DCMAKE_BUILD_TYPE=Release")
             }
         }
@@ -28,12 +27,12 @@ android {
                 "proguard-rules.pro"
             )
             ndk {
-                abiFilters.add("arm64-v8a")
+                //abiFilters.add("arm64-v8a")
             }
         }
         debug {
             ndk {
-                abiFilters.add("arm64-v8a")
+                //abiFilters.add("arm64-v8a")
             }
         }
     }

@@ -1,0 +1,3 @@
+[submodule "llamakt/src/main/cpp/llamacpp"]
+	path = llamakt/src/main/cpp/llamacpp
+	url = git@github.com:ggerganov/llama.cpp.git
