@@ -38,7 +38,6 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.androidx.activity.compose)
-            implementation(project(":llamakt"))
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -47,6 +46,7 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+            implementation(project(":llamakt"))
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -97,5 +97,7 @@ compose.desktop {
             packageName = "org.pinelang.pineai"
             packageVersion = "1.0.0"
         }
+        val llamaktProject = project(":llamakt")
+        jvmArgs("-Djava.library.path=${llamaktProject.layout.buildDirectory.get().asFile.toPath()}/clib")
     }
 }

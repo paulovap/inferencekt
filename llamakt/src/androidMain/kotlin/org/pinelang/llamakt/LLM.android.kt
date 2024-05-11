@@ -1,13 +1,7 @@
 package org.pinelang.llamakt
 
-class LLM {
-
-    /**
-     * A native method that is implemented by the 'llamakt' native library,
-     * which is packaged with this application.
-     */
-    external fun systemInfo(): String
-
+class AndroidLLM: LLM {
+    override fun systemInfo(): String = nativeSystemInfo()
     companion object {
         // Used to load the 'llamakt' library on application startup.
         init {
@@ -15,3 +9,4 @@ class LLM {
         }
     }
 }
+actual fun initLLM(): LLM = AndroidLLM()

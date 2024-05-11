@@ -11,6 +11,21 @@ cmake_minimum_required(VERSION 3.22.1)
 # build script scope).
 project("llamakt")
 
+message (STATUS "JAVA_HOME=${JAVA_HOME}")
+message (STATUS "TARGET=${TARGET}")
+# For Desktop JVM link with JDK
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    set(JAVA_AWT_LIBRARY NotNeeded)
+    set(JAVA_AWT_INCLUDE_PATH NotNeeded)
+    find_package(JNI REQUIRED)
+    include_directories(${JNI_INCLUDE_DIRS})
+    # link_directories(${JNI_LIBRARIES})
+    add_compile_options(-fPIC)
+endif()
+
+
+
+
 add_subdirectory("llamacpp")
 
 # Creates and names a library, sets it as either STATIC
@@ -30,11 +45,19 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         # List C/C++ source files with relative paths to this CMakeLists.txt.
         llamakt.cpp)
 
-# Specifies libraries CMake should link to your target library. You
-# can link libraries from various origins, such as libraries defined in this
-# build script, prebuilt third-party libraries, or Android system libraries.
-target_link_libraries(${CMAKE_PROJECT_NAME}
-        # List libraries link to the target library
-        android
-        llama
-        log)
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Android")
+    # Specifies libraries CMake should link to your target library. You
+    # can link libraries from various origins, such as libraries defined in this
+    # build script, prebuilt third-party libraries, or Android system libraries.
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+            # List libraries link to the target library
+            android
+            llama
+            log)
+else()
+    #Jvm Desktop for now
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+            # List libraries link to the target library
+            llama)
+endif()
+

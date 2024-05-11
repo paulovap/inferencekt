@@ -13,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.ui.tooling.preview.Preview
-
+import org.pinelang.llamakt.initLLM
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -22,7 +22,7 @@ fun App() {
     MaterialTheme {
         var showContent by remember { mutableStateOf(false) }
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Compose: $")
+            Text("Compose: ${initLLM().systemInfo()}")
         }
     }
 }
