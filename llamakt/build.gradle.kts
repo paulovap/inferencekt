@@ -61,7 +61,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            //put your multiplatform dependencies here
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kermit)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -80,7 +81,7 @@ android {
         consumerProguardFiles("consumer-rules.pro")
         externalNativeBuild {
             cmake {
-                arguments("-DBUILD_SHARED_LIBS=ON","-DCMAKE_BUILD_TYPE=Release")
+                arguments("-DBUILD_SHARED_LIBS=ON")
             }
         }
     }

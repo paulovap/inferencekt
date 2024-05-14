@@ -53,11 +53,13 @@ if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Android")
             # List libraries link to the target library
             android
             llama
+            common
             log)
 else()
     #Jvm Desktop for now
     target_link_libraries(${CMAKE_PROJECT_NAME}
             # List libraries link to the target library
-            llama)
+            llama
+            common)
 endif()
 

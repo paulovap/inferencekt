@@ -1,13 +1,5 @@
 package org.pinelang.llamakt
 
-class JvmLLM: LLM {
-    override fun systemInfo(): String = nativeSystemInfo()
-
-    companion object {
-        // Used to load the 'llamakt' library on application startup.
-        init {
-            System.loadLibrary("llamakt")
-        }
-    }
+class JvmLLM : LLM() {
 }
-actual fun initLLM(): LLM = JvmLLM()
+actual fun createLLM(): LLM = JvmLLM()
