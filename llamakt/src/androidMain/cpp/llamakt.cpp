@@ -229,7 +229,7 @@ Java_org_pinelang_llamakt_LLMKt_completionLoop(
 
     const auto n_cur = env->CallIntMethod(intvar_ncur, la_int_var_value);
     if (llama_token_is_eog(model, new_token_id) || n_cur == n_len) {
-        return env->NewStringUTF("");
+        return nullptr;
     }
 
     auto new_token_chars = llama_token_to_piece(context, new_token_id);

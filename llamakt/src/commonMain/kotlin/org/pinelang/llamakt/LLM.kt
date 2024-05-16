@@ -127,8 +127,8 @@ abstract class LLM(
             initLLMBackend()
             val llm = createLLM()
             runBlocking {
-                //llm.loadModel("/data/data/org.pinelang.pineai/files/Phi-3-mini-4k-instruct-q4.gguf")
-                llm.loadModel("/home/paulo/Downloads/Phi-3-mini-4k-instruct-q4.gguf")
+                llm.loadModel("/data/data/org.pinelang.pineai/files/tinyllama-1.1b-chat-v0.3.Q4_0.gguf")
+                //llm.loadModel("/home/paulo/Downloads/Phi-3-mini-4k-instruct-q4.gguf")
             }
             return llm
         }
