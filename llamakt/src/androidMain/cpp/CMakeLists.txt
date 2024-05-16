@@ -21,6 +21,13 @@ if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     include_directories(${JNI_INCLUDE_DIRS})
     # link_directories(${JNI_LIBRARIES})
     add_compile_options(-fPIC)
+
+    FIND_PACKAGE(CUDAToolkit)
+    IF (${CUDAToolkit_FOUND})
+        set(LLAMA_CUDA ON)
+    ELSE (${CUDAToolkit_FOUND})
+        MESSAGE(STATUS "Could not locate CUDA.")
+    ENDIF (${CUDAToolkit_FOUND})
 endif()
 
 

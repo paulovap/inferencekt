@@ -59,6 +59,7 @@ abstract class LLM(
 
 ) {
 
+    abstract val staticPath: String
     private val nlen: Int = 64
     private val runLoop: CoroutineDispatcher = Executors.newSingleThreadExecutor {
         thread(start = false, name = "LLM-RunLoop") {
@@ -122,13 +123,13 @@ abstract class LLM(
     }.flowOn(runLoop)
 
     companion object {
+        
         fun create(): LLM {
             System.loadLibrary("llamakt")
             initLLMBackend()
             val llm = createLLM()
             runBlocking {
-                llm.loadModel("/data/data/org.pinelang.pineai/files/tinyllama-1.1b-chat-v0.3.Q4_0.gguf")
-                //llm.loadModel("/home/paulo/Downloads/Phi-3-mini-4k-instruct-q4.gguf")
+                llm.loadModel(llm.staticPath)
             }
             return llm
         }
