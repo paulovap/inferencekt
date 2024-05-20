@@ -72,8 +72,6 @@ extern "C"
 JNIEXPORT jlong JNICALL
 Java_org_pinelang_llamakt_LLMKt_nativeLoadModel(JNIEnv *env, jclass clazz, jstring path) {
     llama_model_params model_params = llama_model_default_params();
-    model_params.n_gpu_layers = 33;
-    model_params.use_mmap = false;
     auto path_to_model = env->GetStringUTFChars(path, 0);
     LOGi("Loading model from %s", path_to_model);
     auto model = llama_load_model_from_file(path_to_model, model_params);

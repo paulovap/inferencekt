@@ -1,7 +1,10 @@
 package org.pinelang.pineai
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -30,11 +33,13 @@ import org.pinelang.llamakt.LLM
 fun App() {
     val llm by remember { mutableStateOf(LLM.create()) }
     val stringState = remember { mutableStateOf("") }
-    var prompt by remember { mutableStateOf("Who are the pink floyd?") }
+    var prompt by remember { mutableStateOf("<|user|>\n" +
+            "How to explain Internet for a medieval knight in two sentences?<|end|>\n" +
+            "<|assistant|>") }
     val scope = rememberCoroutineScope()
     var flow: Flow<String> = emptyFlow()
     MaterialTheme {
-        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState()).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             TextField(value = prompt,
                 onValueChange = { prompt = it })
             Button(onClick = {
@@ -44,7 +49,6 @@ fun App() {
                             Logger.e(it) { "send() failed" }
                             stringState.value = it.message!!
                     }.collect {
-                            Logger.i { "collecting $it"}
                         stringState.value += it
                     }
                 }

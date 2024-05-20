@@ -11,29 +11,45 @@ cmake_minimum_required(VERSION 3.22.1)
 # build script scope).
 project("llamakt")
 
-message (STATUS "JAVA_HOME=${JAVA_HOME}")
-message (STATUS "TARGET=${TARGET}")
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Android")
+    if(ANDROID_ABI STREQUAL "arm64-v8a")
+        add_compile_options(
+                -march=armv8.4-a+fp16+dotprod
+                -O3
+                -fPIC
+        )
+    endif()
 # For Desktop JVM link with JDK
-if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(JAVA_AWT_LIBRARY NotNeeded)
     set(JAVA_AWT_INCLUDE_PATH NotNeeded)
     find_package(JNI REQUIRED)
     include_directories(${JNI_INCLUDE_DIRS})
-    # link_directories(${JNI_LIBRARIES})
-    add_compile_options(-fPIC)
 
     FIND_PACKAGE(CUDAToolkit)
     IF (${CUDAToolkit_FOUND})
         set(LLAMA_CUDA ON)
+        MESSAGE(STATUS "CUDA FOUND setting is .${LLAMA_CUDA}")
     ELSE (${CUDAToolkit_FOUND})
         MESSAGE(STATUS "Could not locate CUDA.")
     ENDIF (${CUDAToolkit_FOUND})
 endif()
 
+# Download llama.cpp inference backend
+include(FetchContent)
+FetchContent_Declare(
+        llama
+        GIT_REPOSITORY https://github.com/ggerganov/llama.cpp
+        GIT_TAG 1ea2a00
+        GIT_SHALLOW 1
+)
+FetchContent_MakeAvailable(llama)
+
+set_property(TARGET ggml PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET common PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET llama PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 
-
-add_subdirectory("llamacpp")
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.

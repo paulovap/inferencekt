@@ -60,7 +60,7 @@ abstract class LLM(
 ) {
 
     abstract val staticPath: String
-    private val nlen: Int = 64
+    private val nlen: Int = 512
     private val runLoop: CoroutineDispatcher = Executors.newSingleThreadExecutor {
         thread(start = false, name = "LLM-RunLoop") {
             //llm.loadModel("/home/paulo/Downloads/Phi-3-mini-4k-instruct-q4.gguf")
@@ -88,7 +88,7 @@ abstract class LLM(
                     val context = newContext(model)
                     if (context == 0L) throw IllegalStateException("new_context() failed")
 
-                    val batch = newBatch(128, 0, 1)
+                    val batch = newBatch(512, 0, 1)
                     if (batch == 0L) throw IllegalStateException("new_batch() failed")
 
                     Logger.i { "Loaded model $path" }
@@ -103,7 +103,6 @@ abstract class LLM(
         Logger.i { "send called"}
         when (val state = threadLocalState.get()) {
             is LLMState.Loaded -> {
-                Logger.i { "Model loaded, sending..."}
                 val ncur = IntVar(completionInit(state.context, state.batch, message, nlen))
                 while (ncur.value <= nlen) {
                     val str = completionLoop(state.context, state.batch, nlen, ncur)
@@ -111,7 +110,6 @@ abstract class LLM(
                         Logger.i { "receiving null"}
                         break
                     }
-                    Logger.i { "emitting $str"}
                     emit(str)
                 }
                 kvCacheClear(state.context)
