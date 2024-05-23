@@ -8,7 +8,7 @@
 #include <android/log.h>
 
 
-#define TAG "llammakt.cpp"
+#define TAG "llamakt.cpp"
 #define LOGi(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 #define LOGe(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 #else
@@ -60,18 +60,19 @@ bool is_valid_utf8(const char * string) {
 
 extern "C"
 JNIEXPORT jstring JNICALL
-Java_org_pinelang_llamakt_LLMKt_nativeSystemInfo(JNIEnv *env, jobject) {
+Java_org_pinelang_llamakt_LlamacppKt_nativeSystemInfo(JNIEnv *env, jobject) {
     return env->NewStringUTF(llama_print_system_info());
 }
 extern "C"
 JNIEXPORT void JNICALL
-Java_org_pinelang_llamakt_LLMKt_initLLMBackend(JNIEnv *env, jclass clazz) {
+Java_org_pinelang_llamakt_LlamacppKt_initLLMBackend(JNIEnv *env, jclass clazz) {
     llama_backend_init();
 }
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_org_pinelang_llamakt_LLMKt_nativeLoadModel(JNIEnv *env, jclass clazz, jstring path) {
+Java_org_pinelang_llamakt_LlamacppKt_nativeLoadModel(JNIEnv *env, jclass clazz, jstring path) {
     llama_model_params model_params = llama_model_default_params();
+    model_params.n_gpu_layers = 33;
     auto path_to_model = env->GetStringUTFChars(path, 0);
     LOGi("Loading model from %s", path_to_model);
     auto model = llama_load_model_from_file(path_to_model, model_params);
@@ -86,7 +87,7 @@ Java_org_pinelang_llamakt_LLMKt_nativeLoadModel(JNIEnv *env, jclass clazz, jstri
 }
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_org_pinelang_llamakt_LLMKt_newContext(JNIEnv *env, jobject, jlong jmodel) {
+Java_org_pinelang_llamakt_LlamacppKt_newContext(JNIEnv *env, jobject, jlong jmodel) {
     auto model = reinterpret_cast<llama_model *>(jmodel);
 
     if (!model) {
@@ -117,8 +118,8 @@ Java_org_pinelang_llamakt_LLMKt_newContext(JNIEnv *env, jobject, jlong jmodel) {
 }
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_org_pinelang_llamakt_LLMKt_newBatch(JNIEnv *env, jobject, jint n_tokens, jint embd,
-                                         jint n_seq_max) {
+Java_org_pinelang_llamakt_LlamacppKt_newBatch(JNIEnv *env, jobject, jint n_tokens, jint embd,
+                                              jint n_seq_max) {
 
     // Source: Copy of llama.cpp:llama_batch_init but heap-allocated.
 
@@ -153,8 +154,8 @@ Java_org_pinelang_llamakt_LLMKt_newBatch(JNIEnv *env, jobject, jint n_tokens, ji
 }
 extern "C"
 JNIEXPORT jint JNICALL
-Java_org_pinelang_llamakt_LLMKt_completionInit(JNIEnv *env, jobject, jlong context_pointer,
-                                               jlong batch_pointer, jstring jtext, jint n_len) {
+Java_org_pinelang_llamakt_LlamacppKt_completionInit(JNIEnv *env, jobject, jlong context_pointer,
+                                                    jlong batch_pointer, jstring jtext, jint n_len) {
     cached_token_chars.clear();
 
     const auto text = env->GetStringUTFChars(jtext, 0);
@@ -196,7 +197,7 @@ Java_org_pinelang_llamakt_LLMKt_completionInit(JNIEnv *env, jobject, jlong conte
 }
 extern "C"
 JNIEXPORT jstring JNICALL
-Java_org_pinelang_llamakt_LLMKt_completionLoop(
+Java_org_pinelang_llamakt_LlamacppKt_completionLoop(
         JNIEnv *env,
         jclass,
         jlong context_pointer,
@@ -228,6 +229,16 @@ Java_org_pinelang_llamakt_LLMKt_completionLoop(
 
     const auto n_cur = env->CallIntMethod(intvar_ncur, la_int_var_value);
     if (llama_token_is_eog(model, new_token_id) || n_cur == n_len) {
+        const auto timings = llama_get_timings(context);
+        LOGe("\n");
+        LOGe("%s:        load time = %10.2f ms\n", __func__, timings.t_load_ms);
+        LOGe("%s:      sample time = %10.2f ms / %5d runs   (%8.2f ms per token, %8.2f tokens per second)\n",
+                           __func__, timings.t_sample_ms, timings.n_sample, timings.t_sample_ms / timings.n_sample, 1e3 / timings.t_sample_ms * timings.n_sample);
+        LOGe("%s: prompt eval time = %10.2f ms / %5d tokens (%8.2f ms per token, %8.2f tokens per second)\n",
+                           __func__, timings.t_p_eval_ms, timings.n_p_eval, timings.t_p_eval_ms / timings.n_p_eval, 1e3 / timings.t_p_eval_ms * timings.n_p_eval);
+        LOGe("%s:        eval time = %10.2f ms / %5d runs   (%8.2f ms per token, %8.2f tokens per second)\n",
+                           __func__, timings.t_eval_ms, timings.n_eval, timings.t_eval_ms / timings.n_eval, 1e3 / timings.t_eval_ms * timings.n_eval);
+        LOGe("%s:       total time = %10.2f ms / %5d tokens\n", __func__, (timings.t_end_ms - timings.t_start_ms), (timings.n_p_eval + timings.n_eval));
         return nullptr;
     }
 
@@ -237,7 +248,6 @@ Java_org_pinelang_llamakt_LLMKt_completionLoop(
     jstring new_token = nullptr;
     if (is_valid_utf8(cached_token_chars.c_str())) {
         new_token = env->NewStringUTF(cached_token_chars.c_str());
-        LOGi("cached: %s, new_token_chars: `%s`, id: %d", cached_token_chars.c_str(), new_token_chars.c_str(), new_token_id);
         cached_token_chars.clear();
     } else {
         new_token = env->NewStringUTF("");
@@ -257,6 +267,6 @@ Java_org_pinelang_llamakt_LLMKt_completionLoop(
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_org_pinelang_llamakt_LLMKt_kvCacheClear(JNIEnv *env, jclass clazz, jlong context) {
+Java_org_pinelang_llamakt_LlamacppKt_kvCacheClear(JNIEnv *env, jclass clazz, jlong context) {
     llama_kv_cache_clear(reinterpret_cast<llama_context *>(context));
 }
