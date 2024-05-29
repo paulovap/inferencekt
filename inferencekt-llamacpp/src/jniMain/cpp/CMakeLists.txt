@@ -20,7 +20,8 @@ if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Android")
         )
     endif()
 # For Desktop JVM link with JDK
-elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
+elseif (CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    #TODO: We don't need JNI if target is native.
     set(JAVA_AWT_LIBRARY NotNeeded)
     set(JAVA_AWT_INCLUDE_PATH NotNeeded)
     find_package(JNI REQUIRED)
@@ -33,6 +34,9 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     ELSE (${CUDAToolkit_FOUND})
         MESSAGE(STATUS "Could not locate CUDA.")
     ENDIF (${CUDAToolkit_FOUND})
+else()
+    message(STATUS "CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}")
+    message(STATUS "TARGET ${TARGET}")
 endif()
 
 # Download llama.cpp inference backend

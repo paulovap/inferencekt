@@ -2,17 +2,18 @@ package org.pinelang.llamakt
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import java.util.concurrent.Executors
-import kotlin.concurrent.thread
+import kotlinx.coroutines.newSingleThreadContext
 
 expect fun createDefaultModel(): Model
+expect fun platformInitBackend()
 
 private external fun nativeSystemInfo(): String
-private external fun initLLMBackend()
+private external fun initLlamaBackend()
 
 private external fun completionInit(
     context: Long,
@@ -29,14 +30,11 @@ private external fun completionLoop(
 ): String?
 
 private class IntVar(value: Int) {
-    @Volatile
     var value: Int = value
         private set
 
     fun inc() {
-        synchronized(this) {
-            value += 1
-        }
+        value += 1
     }
 }
 
@@ -52,6 +50,7 @@ data class LlamainternalPointers(
     val context: Long = 0,
     val batch: Long = 0)
 
+@OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 class LlammaCPPInferenceEngine(): InferenceEngine {
     override val model: Model?
         get() = _model
@@ -62,19 +61,10 @@ class LlammaCPPInferenceEngine(): InferenceEngine {
     private var _modelStatus: ModelStatus = ModelStatus.Idle
     private val nlen = 512
     private var pointers = LlamainternalPointers()
-    private val runLoop: CoroutineDispatcher = Executors.newSingleThreadExecutor {
-        thread(start = false, name = "LLM-RunLoop") {
-            it.run()
-        }.apply {
-            uncaughtExceptionHandler = Thread.UncaughtExceptionHandler { _, exception: Throwable ->
-                Logger.e(exception) { "Unhandled exception" }
-            }
-        }
-    }.asCoroutineDispatcher()
+    private val runLoop: CoroutineDispatcher = newSingleThreadContext("lammathread")
 
     init {
-        System.loadLibrary("llamakt")
-        initLLMBackend()
+        platformInitBackend()
     }
 
     override suspend fun loadModel(model: Model): ModelStatus {

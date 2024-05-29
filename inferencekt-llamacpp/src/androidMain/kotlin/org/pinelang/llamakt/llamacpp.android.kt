@@ -3,6 +3,11 @@ package org.pinelang.llamakt
 actual fun createDefaultModel(): Model {
     return AndroidModel()
 }
+
+actual fun platformInitBackend() {
+    System.loadLibrary("llamakt")
+}
+
 // /data/data/org.pinelang.pineai/files/Phi-3-mini-4k-instruct-q4.gguf
 class AndroidModel(
     override val modelName: String = "Phi-3-mini-4k-instruct-q4.gguf",

@@ -65,7 +65,7 @@ Java_org_pinelang_llamakt_LlamacppKt_nativeSystemInfo(JNIEnv *env, jobject) {
 }
 extern "C"
 JNIEXPORT void JNICALL
-Java_org_pinelang_llamakt_LlamacppKt_initLLMBackend(JNIEnv *env, jclass clazz) {
+Java_org_pinelang_llamakt_LlamacppKt_initLlamaBackend(JNIEnv *env, jclass clazz) {
     llama_backend_init();
 }
 extern "C"
