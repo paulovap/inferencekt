@@ -11,7 +11,6 @@ data class Chat(val role: Role, val content: String)
 
 data class Content(val chat: List<Chat>)
 
-//max_new_tokens=256, do_sample=True, temperature=0.7, top_k=50, top_p=0.95)
 data class InferenceParams(
     val temperature: Double = 0.7,
     val topK: Int = 50,

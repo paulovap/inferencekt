@@ -104,6 +104,7 @@ Java_org_pinelang_llamakt_LlamacppKt_newContext(JNIEnv *env, jobject, jlong jmod
     ctx_params.n_ctx = 2048;
     ctx_params.n_threads       = n_threads;
     ctx_params.n_threads_batch = n_threads;
+    //ctx_params.flash_attn = true;
 
     llama_context * context = llama_new_context_with_model(model, ctx_params);
 

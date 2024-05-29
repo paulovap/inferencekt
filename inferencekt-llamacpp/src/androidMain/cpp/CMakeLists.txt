@@ -49,8 +49,6 @@ set_property(TARGET ggml PROPERTY POSITION_INDEPENDENT_CODE ON)
 set_property(TARGET common PROPERTY POSITION_INDEPENDENT_CODE ON)
 set_property(TARGET llama PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-
-
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
 # You can define multiple libraries, and CMake builds them for you.

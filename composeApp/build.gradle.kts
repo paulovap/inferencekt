@@ -46,8 +46,9 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
-            implementation(project(":llamakt"))
             implementation(libs.kermit)
+            implementation(project(":inferencekt"))
+            implementation(project(":inferencekt-llamacpp"))
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -98,7 +99,7 @@ compose.desktop {
             packageName = "org.pinelang.pineai"
             packageVersion = "1.0.0"
         }
-        val llamaktProject = project(":llamakt")
+        val llamaktProject = project(":inferencekt-llamacpp")
         jvmArgs("-Djava.library.path=${llamaktProject.layout.buildDirectory.get().asFile.toPath()}/clib")
     }
 }

@@ -48,21 +48,22 @@ kotlin {
         }
     }
 
-//    listOf(
-//        iosX64(),
-//        iosArm64(),
-//        iosSimulatorArm64()
-//    ).forEach {
-//        it.binaries.framework {
-//            baseName = "papa"
-//            isStatic = true
-//        }
-//    }
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach {
+        it.binaries.framework {
+            baseName = "inferencekt-llamacpp"
+            isStatic = true
+        }
+    }
 
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kermit)
+            implementation(project(":inferencekt"))
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -71,7 +72,7 @@ kotlin {
 }
 
 android {
-    namespace = "org.pinelang.llammakt"
+    namespace = "org.pinelang.inferencekt"
     compileSdk = 34
 
     defaultConfig {
