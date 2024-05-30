@@ -8,26 +8,27 @@ plugins {
 
 val wDir = layout.buildDirectory.dir("clib").get().asFile
 
-tasks.create<Exec>("desktopRunCmake") {
+tasks.register("desktopRunCMake") {
     group = "build"
-    workingDir = wDir
-    val javaHome = environment["JAVA_HOME"]!!
+    println(wDir)
+    val javaHome = System.getenv("JAVA_HOME")
+        ?: throw GradleException("JAVA_HOME must be set on your environment!")
+    val maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).toString()
     doFirst {
         Files.createDirectories(wDir.toPath())
     }
-    environment("TARGET", "desktop")
-    environment("JAVA_HOME", javaHome)
-    commandLine(listOf("cmake", "${projectDir}/src/jniMain/cpp"))
-}
-tasks.create<Exec>("desktopRunMake") {
-    dependsOn("desktopRunCmake")
-    val javaHome = environment["JAVA_HOME"]!!
-    group = "build"
-    workingDir = wDir
-    environment("TARGET", "desktop")
-    environment("JAVA_HOME", javaHome)
-    environment("TARGET", currentOs)
-    commandLine(listOf("make"))
+    doLast {
+        exec {
+            workingDir = wDir
+            environment("JAVA_HOME", javaHome)
+            commandLine(listOf("cmake", "${projectDir}/src/jniMain/cpp"))
+        }
+        exec {
+            workingDir = wDir
+            environment("JAVA_HOME", javaHome)
+            commandLine(listOf("make", "-j", maxParallelForks))
+        }
+    }
 }
 
 kotlin {
@@ -41,15 +42,17 @@ kotlin {
             }
         }
     }
-    jvm("desktop") {
+    jvm {
         val processResources = compilations["main"].processResourcesTaskName
         (tasks[processResources] as ProcessResources).apply {
             // A task that build the JNI shared library for all targets and
             // copy each outputs into $buildDir/resources-jni
-            dependsOn("desktopRunMake")
+            dependsOn("desktopRunCMake")
             from("${layout.buildDirectory}/clib")
         }
     }
+
+    linuxX64()
 
     listOf(
         iosX64(),
@@ -66,6 +69,10 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
+        val commonMain by getting
+        val jvmMain by getting
+        val androidMain by getting
+
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kermit)
@@ -74,11 +81,10 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
-        val desktopMain by getting
-        val androidMain by getting
 
         val jniMain by creating
-        desktopMain.dependsOn(jniMain)
+        jniMain.dependsOn(commonMain)
+        jvmMain.dependsOn(jniMain)
         androidMain.dependsOn(jniMain)
 //
 //        val appleMain by getting

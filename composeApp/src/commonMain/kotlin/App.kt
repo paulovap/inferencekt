@@ -17,26 +17,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import co.touchlab.kermit.Logger
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.pinelang.inferencekt.LlammaCPPInferenceEngine
+import org.pinelang.inferencekt.platformCreateDefaultModel
 import org.pinelang.llamakt.Chat
 import org.pinelang.llamakt.Content
-import org.pinelang.llamakt.LlammaCPPInferenceEngine
 import org.pinelang.llamakt.LocalInferenceLoader
 import org.pinelang.llamakt.Role
-import org.pinelang.llamakt.createDefaultModel
-import kotlin.system.measureTimeMillis
+import kotlin.time.measureTime
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 @Preview
 fun App() {
     val inference by remember { mutableStateOf(LocalInferenceLoader(
-        model = createDefaultModel(),
+        model = platformCreateDefaultModel(),
         inferenceEngine = LlammaCPPInferenceEngine()
     )) }
     val stringState = remember { mutableStateOf("") }
@@ -51,7 +49,7 @@ fun App() {
                 Logger.d { "load model clicked" }
                 scope.launch {
                     Logger.i {
-                        "Loaded model in ${measureTimeMillis { inference.loadModel()}}" //noop if already loaded }
+                        "Loaded model in ${measureTime { inference.loadModel()}}" //noop if already loaded }
                     }
 
                     inference.generateText(Content(listOf(Chat(Role.User, prompt)))).catch {

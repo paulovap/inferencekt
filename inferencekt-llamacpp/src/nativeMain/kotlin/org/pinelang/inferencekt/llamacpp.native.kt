@@ -1,9 +1,14 @@
-package org.pinelang.llamakt
+package org.pinelang.inferencekt
+
+import org.pinelang.llamakt.Content
+import org.pinelang.llamakt.InferenceParams
+import org.pinelang.llamakt.Model
+import org.pinelang.llamakt.Role
 
 actual fun platformInitBackend() {
 }
 
-actual fun createDefaultModel(): Model {
+actual fun platformCreateDefaultModel(): Model {
     return NativeModel()
 }
 
@@ -28,4 +33,42 @@ override val config: InferenceParams = InferenceParams()): Model {
         stringBuffer.append("<|assistant|>")
         return stringBuffer.toString()
     }
+}
+
+actual fun platformLoadModel(modelPath: String): Long {
+    TODO("Not yet implemented")
+}
+
+actual fun platformNewContext(model: Long): Long {
+    TODO("Not yet implemented")
+}
+
+actual fun platformNewBatch(
+    nTokens: Int,
+    embd: Int,
+    nSeqMax: Int
+): Long {
+    TODO("Not yet implemented")
+}
+
+actual fun platformCompletionLoop(
+    context: Long,
+    batch: Long,
+    nLen: Int,
+    ncur: IntVar
+): String? {
+    TODO("Not yet implemented")
+}
+
+actual fun platformCompletionInit(
+    context: Long,
+    batch: Long,
+    prompt: String,
+    nLen: Int
+): Int {
+    TODO("Not yet implemented")
+}
+
+actual fun platformKvCacheClear(context: Long) {
+    TODO("Not yet implemented")
 }

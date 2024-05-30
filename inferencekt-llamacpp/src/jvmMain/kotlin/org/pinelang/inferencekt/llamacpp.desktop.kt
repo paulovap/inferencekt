@@ -1,11 +1,12 @@
-package org.pinelang.llamakt
+package org.pinelang.inferencekt
 
-actual fun createDefaultModel(): Model {
+import org.pinelang.llamakt.Content
+import org.pinelang.llamakt.InferenceParams
+import org.pinelang.llamakt.Model
+import org.pinelang.llamakt.Role
+
+actual fun platformCreateDefaultModel(): Model {
     return DesktopModel()
-}
-
-actual fun platformInitBackend() {
-    System.loadLibrary("llamakt")
 }
 
 // /data/data/org.pinelang.pineai/files/Phi-3-mini-4k-instruct-q4.gguf
@@ -13,7 +14,8 @@ class DesktopModel(
     override val modelName: String = "Phi-3-mini-4k-instruct-q4.gguf",
     override val modelPath: String = "/home/paulo/Downloads/$modelName",
     override val isLocal: Boolean = true,
-    override val config: InferenceParams = InferenceParams()): Model {
+    override val config: InferenceParams = InferenceParams()
+): Model {
 
     override fun formatContent(content: Content): String {
         val stringBuffer = StringBuffer()

@@ -1,4 +1,4 @@
-package org.pinelang.llamakt
+package org.pinelang.inferencekt
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineDispatcher
@@ -8,28 +8,20 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.newSingleThreadContext
+import org.pinelang.llamakt.InferenceEngine
+import org.pinelang.llamakt.Model
+import org.pinelang.llamakt.ModelStatus
 
-expect fun createDefaultModel(): Model
+expect fun platformCreateDefaultModel(): Model
 expect fun platformInitBackend()
+expect fun platformLoadModel(modelPath: String): Long
+expect fun platformNewContext(model: Long): Long
+expect fun platformNewBatch(nTokens: Int, embd: Int, nSeqMax: Int): Long
+expect fun platformCompletionLoop(context: Long, batch: Long, nLen: Int, ncur: IntVar): String?
+expect fun platformCompletionInit(context: Long, batch: Long, prompt: String, nLen: Int): Int
+expect fun platformKvCacheClear(context: Long)
 
-private external fun nativeSystemInfo(): String
-private external fun initLlamaBackend()
-
-private external fun completionInit(
-    context: Long,
-    batch: Long,
-    text: String,
-    nLen: Int
-): Int
-
-private external fun completionLoop(
-    context: Long,
-    batch: Long,
-    nLen: Int,
-    ncur: IntVar
-): String?
-
-private class IntVar(value: Int) {
+class IntVar(value: Int) {
     var value: Int = value
         private set
 
@@ -37,13 +29,6 @@ private class IntVar(value: Int) {
         value += 1
     }
 }
-
-private external fun kvCacheClear(context: Long)
-private external fun newContext(model: Long): Long
-private external fun newBatch(nTokens: Int, embd: Int, nSeqMax: Int): Long
-private external fun nativeLoadModel(path: String): Long
-
-
 
 data class LlamainternalPointers(
     val model: Long = 0,
@@ -68,26 +53,26 @@ class LlammaCPPInferenceEngine(): InferenceEngine {
     }
 
     override suspend fun loadModel(model: Model): ModelStatus {
-//        val nativeModel = nativeLoadModel(model.modelPath)
-//        if (nativeModel == 0L){
-//            _modelStatus = ModelStatus.Error(IllegalStateException("load_model() failed"))
-//            return modelStatus
-//        }
-//        val context = newContext(nativeModel)
-//        if (context == 0L) {
-//            _modelStatus =  ModelStatus.Error(IllegalStateException("new_context() failed"))
-//            return modelStatus
-//        }
-//
-//        val batch = newBatch(512, 0, 1)
-//        if (batch == 0L) {
-//            _modelStatus =  ModelStatus.Error(IllegalStateException("new_batch() failed"))
-//        }
-//
-//        Logger.i { "Loaded model $model" }
-//        pointers = LlamainternalPointers(nativeModel, context, batch)
-//        _modelStatus = ModelStatus.Loaded
-//        _model = model
+        val nativeModel = platformLoadModel(model.modelPath)
+        if (nativeModel == 0L){
+            _modelStatus = ModelStatus.Error(IllegalStateException("load_model() failed"))
+            return modelStatus
+        }
+        val context = platformNewContext(nativeModel)
+        if (context == 0L) {
+            _modelStatus =  ModelStatus.Error(IllegalStateException("new_context() failed"))
+            return modelStatus
+        }
+
+        val batch = platformNewBatch(512, 0, 1)
+        if (batch == 0L) {
+            _modelStatus =  ModelStatus.Error(IllegalStateException("new_batch() failed"))
+        }
+
+        Logger.i { "Loaded model $model" }
+        pointers = LlamainternalPointers(nativeModel, context, batch)
+        _modelStatus = ModelStatus.Loaded
+        _model = model
         return modelStatus
     }
 
@@ -101,7 +86,7 @@ class LlammaCPPInferenceEngine(): InferenceEngine {
             when (modelStatus) {
                 is ModelStatus.Loaded -> {
                     val ncur = IntVar(
-                        completionInit(
+                        platformCompletionInit(
                             pointers.context,
                             pointers.batch,
                             prompt,
@@ -109,14 +94,12 @@ class LlammaCPPInferenceEngine(): InferenceEngine {
                         )
                     )
                     while (ncur.value <= nlen) {
-                        val str = completionLoop(pointers.context, pointers.batch, nlen, ncur)
-                        if (str == null) {
-                            Logger.i { "receiving null" }
-                            break
-                        }
+                        val str =
+                            platformCompletionLoop(pointers.context, pointers.batch, nlen, ncur)
+                                ?: break
                         emit(str)
                     }
-                    kvCacheClear(pointers.context)
+                    platformKvCacheClear(pointers.context)
                 }
 
                 else -> {

@@ -19,7 +19,8 @@ kotlin {
         }
     }
     
-    jvm("desktop")
+    jvm()
+
 // Disabled for now
     listOf(
         iosX64(),
@@ -33,7 +34,7 @@ kotlin {
     }
     
     sourceSets {
-        val desktopMain by getting
+        val jvmMain by getting
         
         androidMain.dependencies {
             implementation(libs.compose.ui.tooling.preview)
@@ -50,7 +51,7 @@ kotlin {
             implementation(project(":inferencekt"))
             implementation(project(":inferencekt-llamacpp"))
         }
-        desktopMain.dependencies {
+        jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
         }
     }
@@ -103,3 +104,4 @@ compose.desktop {
         jvmArgs("-Djava.library.path=${llamaktProject.layout.buildDirectory.get().asFile.toPath()}/clib")
     }
 }
+
