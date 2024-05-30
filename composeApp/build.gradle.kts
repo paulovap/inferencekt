@@ -21,16 +21,16 @@ kotlin {
     
     jvm("desktop")
 // Disabled for now
-//    listOf(
-//        iosX64(),
-//        iosArm64(),
-//        iosSimulatorArm64()
-//    ).forEach { iosTarget ->
-//        iosTarget.binaries.framework {
-//            baseName = "ComposeApp"
-//            isStatic = true
-//        }
-//    }
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "ComposeApp"
+            isStatic = true
+        }
+    }
     
     sourceSets {
         val desktopMain by getting

@@ -68,26 +68,26 @@ class LlammaCPPInferenceEngine(): InferenceEngine {
     }
 
     override suspend fun loadModel(model: Model): ModelStatus {
-        val nativeModel = nativeLoadModel(model.modelPath)
-        if (nativeModel == 0L){
-            _modelStatus = ModelStatus.Error(IllegalStateException("load_model() failed"))
-            return modelStatus
-        }
-        val context = newContext(nativeModel)
-        if (context == 0L) {
-            _modelStatus =  ModelStatus.Error(IllegalStateException("new_context() failed"))
-            return modelStatus
-        }
-
-        val batch = newBatch(512, 0, 1)
-        if (batch == 0L) {
-            _modelStatus =  ModelStatus.Error(IllegalStateException("new_batch() failed"))
-        }
-
-        Logger.i { "Loaded model $model" }
-        pointers = LlamainternalPointers(nativeModel, context, batch)
-        _modelStatus = ModelStatus.Loaded
-        _model = model
+//        val nativeModel = nativeLoadModel(model.modelPath)
+//        if (nativeModel == 0L){
+//            _modelStatus = ModelStatus.Error(IllegalStateException("load_model() failed"))
+//            return modelStatus
+//        }
+//        val context = newContext(nativeModel)
+//        if (context == 0L) {
+//            _modelStatus =  ModelStatus.Error(IllegalStateException("new_context() failed"))
+//            return modelStatus
+//        }
+//
+//        val batch = newBatch(512, 0, 1)
+//        if (batch == 0L) {
+//            _modelStatus =  ModelStatus.Error(IllegalStateException("new_batch() failed"))
+//        }
+//
+//        Logger.i { "Loaded model $model" }
+//        pointers = LlamainternalPointers(nativeModel, context, batch)
+//        _modelStatus = ModelStatus.Loaded
+//        _model = model
         return modelStatus
     }
 
