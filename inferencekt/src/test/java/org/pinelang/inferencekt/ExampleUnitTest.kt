@@ -1,4 +1,4 @@
-package org.pinelang.llamakt
+package org.pinelang.inferencekt
 
 import org.junit.Test
 

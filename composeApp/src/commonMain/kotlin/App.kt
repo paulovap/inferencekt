@@ -21,22 +21,24 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.pinelang.inferencekt.LlammaCPPInferenceEngine
-import org.pinelang.inferencekt.platformCreateDefaultModel
-import org.pinelang.llamakt.Chat
-import org.pinelang.llamakt.Content
-import org.pinelang.llamakt.LocalInferenceLoader
-import org.pinelang.llamakt.Role
+import org.pinelang.inferencekt.Chat
+import org.pinelang.inferencekt.Content
+import org.pinelang.inferencekt.LocalInferenceLoader
+import org.pinelang.inferencekt.Role
+import org.pinelang.inferencekt.llamacpp.LlammaCPPInferenceEngine
+import org.pinelang.inferencekt.llamacpp.platformCreateDefaultModel
 import kotlin.time.measureTime
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 @Preview
 fun App() {
-    val inference by remember { mutableStateOf(LocalInferenceLoader(
+    val inference by remember { mutableStateOf(
+        LocalInferenceLoader(
         model = platformCreateDefaultModel(),
         inferenceEngine = LlammaCPPInferenceEngine()
-    )) }
+    )
+    ) }
     val stringState = remember { mutableStateOf("") }
     var prompt by remember { mutableStateOf("How to explain Internet for a medieval knight in two sentences") }
     val scope = rememberCoroutineScope()

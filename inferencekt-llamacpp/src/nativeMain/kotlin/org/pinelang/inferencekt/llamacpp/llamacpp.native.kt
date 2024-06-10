@@ -1,11 +1,12 @@
-package org.pinelang.inferencekt
+package org.pinelang.inferencekt.llamacpp
 
-import org.pinelang.llamakt.Content
-import org.pinelang.llamakt.InferenceParams
-import org.pinelang.llamakt.Model
-import org.pinelang.llamakt.Role
+import org.pinelang.inferencekt.Content
+import org.pinelang.inferencekt.InferenceParams
+import org.pinelang.inferencekt.Model
+import org.pinelang.inferencekt.Role
 
 actual fun platformInitBackend() {
+    TODO("Not yet implemented")
 }
 
 actual fun platformCreateDefaultModel(): Model {

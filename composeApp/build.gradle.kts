@@ -22,16 +22,16 @@ kotlin {
     jvm()
 
 // Disabled for now
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "ComposeApp"
-            isStatic = true
-        }
-    }
+//    listOf(
+//        iosX64(),
+//        iosArm64(),
+//        iosSimulatorArm64()
+//    ).forEach { iosTarget ->
+//        iosTarget.binaries.framework {
+//            baseName = "ComposeApp"
+//            isStatic = true
+//        }
+//    }
     
     sourceSets {
         val jvmMain by getting
@@ -100,8 +100,8 @@ compose.desktop {
             packageName = "org.pinelang.pineai"
             packageVersion = "1.0.0"
         }
-        val llamaktProject = project(":inferencekt-llamacpp")
-        jvmArgs("-Djava.library.path=${llamaktProject.layout.buildDirectory.get().asFile.toPath()}/clib")
+        val llamacppProject = project(":inferencekt-llamacpp")
+        jvmArgs("-Djava.library.path=${llamacppProject.layout.buildDirectory.get().asFile.toPath()}/clib")
     }
 }
 

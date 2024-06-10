@@ -1,4 +1,4 @@
-package org.pinelang.inferencekt
+package org.pinelang.inferencekt.llamacpp
 
 
 private external fun nativeSystemInfo(): String

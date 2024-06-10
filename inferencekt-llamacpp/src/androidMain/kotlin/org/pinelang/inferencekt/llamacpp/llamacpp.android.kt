@@ -1,9 +1,10 @@
-package org.pinelang.inferencekt
+package org.pinelang.inferencekt.llamacpp
 
-import org.pinelang.llamakt.Content
-import org.pinelang.llamakt.InferenceParams
-import org.pinelang.llamakt.Model
-import org.pinelang.llamakt.Role
+import org.pinelang.inferencekt.Content
+import org.pinelang.inferencekt.InferenceParams
+import org.pinelang.inferencekt.Model
+import org.pinelang.inferencekt.Role
+
 
 actual fun platformCreateDefaultModel(): Model {
     return AndroidModel()
@@ -14,7 +15,8 @@ class AndroidModel(
     override val modelName: String = "Phi-3-mini-4k-instruct-q4.gguf",
     override val modelPath: String = "/data/data/org.pinelang.pineai/files/$modelName",
     override val isLocal: Boolean = true,
-    override val config: InferenceParams = InferenceParams()): Model {
+    override val config: InferenceParams = InferenceParams()
+): Model {
 
     override fun formatContent(content: Content): String {
         val stringBuffer = StringBuffer()

@@ -9,35 +9,37 @@ cmake_minimum_required(VERSION 3.22.1)
 # Since this is the top level CMakeLists.txt, the project name is also accessible
 # with ${CMAKE_PROJECT_NAME} (both CMake variables are in-sync within the top level
 # build script scope).
-project("llamakt")
+project("llamacpp")
 
-if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Android")
-    if(ANDROID_ABI STREQUAL "arm64-v8a")
-        add_compile_options(
+option(LLAMACPP_PLATFORM_TYPE "LLAMACPP_PLATFORM_TYPE" "")
+
+
+if (("${CMAKE_SYSTEM_NAME}" STREQUAL "Android") AND (ANDROID_ABI STREQUAL "arm64-v8a"))
+    add_compile_options(
                 -march=armv8.4-a+fp16+dotprod
                 -O3
                 -fPIC
         )
-    endif()
-# For Desktop JVM link with JDK
-elseif (CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Darwin")
+else()
+# CUDA IS NOT WORKING ON MY MACHINE, DISABLING FOR NOW
+#    FIND_PACKAGE(CUDAToolkit)
+#    IF (${CUDAToolkit_FOUND})
+#        set(LLAMA_CUDA ON)
+#        MESSAGE(STATUS "CUDA FOUND setting is .${LLAMA_CUDA}")
+#    ELSE (${CUDAToolkit_FOUND})
+#        MESSAGE(STATUS "Could not locate CUDA.")
+#    ENDIF (${CUDAToolkit_FOUND})
+endif()
+
+# We only need the wrapper .so (llamakt.so) if we are
+# on a jvm target
+if(LLAMACPP_PLATFORM_TYPE STREQUAL "jvm")
     #TODO: We don't need JNI if target is native.
     set(JAVA_AWT_LIBRARY NotNeeded)
     set(JAVA_AWT_INCLUDE_PATH NotNeeded)
     find_package(JNI REQUIRED)
     include_directories(${JNI_INCLUDE_DIRS})
-
-    FIND_PACKAGE(CUDAToolkit)
-    IF (${CUDAToolkit_FOUND})
-        set(LLAMA_CUDA ON)
-        MESSAGE(STATUS "CUDA FOUND setting is .${LLAMA_CUDA}")
-    ELSE (${CUDAToolkit_FOUND})
-        MESSAGE(STATUS "Could not locate CUDA.")
-    ENDIF (${CUDAToolkit_FOUND})
-else()
-    message(STATUS "CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}")
-    message(STATUS "TARGET ${TARGET}")
-endif()
+endif ()
 
 # Download llama.cpp inference backend
 include(FetchContent)
@@ -53,22 +55,20 @@ set_property(TARGET ggml PROPERTY POSITION_INDEPENDENT_CODE ON)
 set_property(TARGET common PROPERTY POSITION_INDEPENDENT_CODE ON)
 set_property(TARGET llama PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-# Creates and names a library, sets it as either STATIC
-# or SHARED, and provides the relative paths to its source code.
-# You can define multiple libraries, and CMake builds them for you.
-# Gradle automatically packages shared libraries with your APK.
-#
-# In this top level CMakeLists.txt, ${CMAKE_PROJECT_NAME} is used to define
-# the target library name; in the sub-module's CMakeLists.txt, ${PROJECT_NAME}
-# is preferred for the same purpose.
-#
-# In order to load a library into your app from Java/Kotlin, you must call
-# System.loadLibrary() and pass the name of the library defined here;
-# for GameActivity/NativeActivity derived applications, the same library name must be
-# used in the AndroidManifest.xml file.
-add_library(${CMAKE_PROJECT_NAME} SHARED
-        # List C/C++ source files with relative paths to this CMakeLists.txt.
-        llamakt.cpp)
+
+
+# We only need the wrapper .so (llamacpp.so) if we are
+# on a jvm target
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Android" OR LLAMACPP_PLATFORM_TYPE STREQUAL "jvm")
+    add_library(${CMAKE_PROJECT_NAME} SHARED
+            # List C/C++ source files with relative paths to this CMakeLists.txt.
+            llamakt.cpp)
+else ()
+    add_library(${CMAKE_PROJECT_NAME} SHARED
+            # List C/C++ source files with relative paths to this CMakeLists.txt.
+            llamakt_nojni.h
+            llamakt_nojni.cpp)
+endif ()
 
 if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Android")
     # Specifies libraries CMake should link to your target library. You
@@ -84,7 +84,7 @@ else()
     #Jvm Desktop for now
     target_link_libraries(${CMAKE_PROJECT_NAME}
             # List libraries link to the target library
+            PRIVATE
             llama
             common)
 endif()
-

@@ -1,0 +1,3 @@
+headers = llamakt_nojni.h
+compilerOpts= -Isrc/jniMain/cpp
+linkerOpts.linux = -Linferencekt-llamacpp/build/clib/linuxX64 -lllamacpp

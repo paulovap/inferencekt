@@ -1,4 +1,4 @@
-package org.pinelang.inferencekt
+package org.pinelang.inferencekt.llamacpp
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineDispatcher
@@ -8,9 +8,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.newSingleThreadContext
-import org.pinelang.llamakt.InferenceEngine
-import org.pinelang.llamakt.Model
-import org.pinelang.llamakt.ModelStatus
+import org.pinelang.inferencekt.InferenceEngine
+import org.pinelang.inferencekt.Model
+import org.pinelang.inferencekt.ModelStatus
 
 expect fun platformCreateDefaultModel(): Model
 expect fun platformInitBackend()
