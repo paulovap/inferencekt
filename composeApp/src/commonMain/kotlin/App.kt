@@ -40,7 +40,7 @@ fun App() {
     )
     ) }
     val stringState = remember { mutableStateOf("") }
-    var prompt by remember { mutableStateOf("How to explain Internet for a medieval knight in two sentences") }
+    var prompt by remember { mutableStateOf("What is the top 5 most used programming languages?") }
     val scope = rememberCoroutineScope()
     MaterialTheme {
         Column(modifier = Modifier.verticalScroll(rememberScrollState()).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {

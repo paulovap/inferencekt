@@ -101,7 +101,7 @@ compose.desktop {
             packageVersion = "1.0.0"
         }
         val llamacppProject = project(":inferencekt-llamacpp")
-        jvmArgs("-Djava.library.path=${llamacppProject.layout.buildDirectory.get().asFile.toPath()}/clib")
+        jvmArgs("-Djava.library.path=${llamacppProject.layout.buildDirectory.get().asFile.toPath()}/clib/jvm")
     }
 }
 

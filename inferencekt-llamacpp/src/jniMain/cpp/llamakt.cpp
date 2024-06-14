@@ -61,17 +61,17 @@ bool is_valid_utf8(const char * string) {
 
 extern "C"
 JNIEXPORT jstring JNICALL
-Java_org_pinelang_inferencekt_Llamacpp_1jniKt_nativeSystemInfo(JNIEnv *env, jobject) {
+Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_nativeSystemInfo(JNIEnv *env, jobject) {
     return env->NewStringUTF(llama_print_system_info());
 }
 extern "C"
 JNIEXPORT void JNICALL
-Java_org_pinelang_inferencekt_Llamacpp_1jniKt_initLlamaBackend(JNIEnv *env, jclass clazz) {
+Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_initLlamaBackend(JNIEnv *env, jclass clazz) {
     llama_backend_init();
 }
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_org_pinelang_inferencekt_Llamacpp_1jniKt_nativeLoadModel(JNIEnv *env, jclass clazz, jstring path) {
+Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_nativeLoadModel(JNIEnv *env, jclass clazz, jstring path) {
     llama_model_params model_params = llama_model_default_params();
     model_params.n_gpu_layers = 33;
     auto path_to_model = env->GetStringUTFChars(path, 0);
@@ -88,7 +88,7 @@ Java_org_pinelang_inferencekt_Llamacpp_1jniKt_nativeLoadModel(JNIEnv *env, jclas
 }
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_org_pinelang_inferencekt_Llamacpp_1jniKt_nativeNewContext(JNIEnv *env, jobject, jlong jmodel) {
+Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_nativeNewContext(JNIEnv *env, jobject, jlong jmodel) {
     auto model = reinterpret_cast<llama_model *>(jmodel);
 
     if (!model) {
@@ -120,7 +120,7 @@ Java_org_pinelang_inferencekt_Llamacpp_1jniKt_nativeNewContext(JNIEnv *env, jobj
 }
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_org_pinelang_inferencekt_Llamacpp_1jniKt_nativeNewBatch(JNIEnv *env, jobject, jint n_tokens, jint embd,
+Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_nativeNewBatch(JNIEnv *env, jobject, jint n_tokens, jint embd,
                                               jint n_seq_max) {
 
     // Source: Copy of llama.cpp:llama_batch_init but heap-allocated.
@@ -156,7 +156,7 @@ Java_org_pinelang_inferencekt_Llamacpp_1jniKt_nativeNewBatch(JNIEnv *env, jobjec
 }
 extern "C"
 JNIEXPORT jint JNICALL
-Java_org_pinelang_inferencekt_Llamacpp_1jniKt_nativeCompletionInit(JNIEnv *env, jobject, jlong context_pointer,
+Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_nativeCompletionInit(JNIEnv *env, jobject, jlong context_pointer,
                                                                    jlong batch_pointer, jstring jtext, jint n_len) {
     cached_token_chars.clear();
 
@@ -199,7 +199,7 @@ Java_org_pinelang_inferencekt_Llamacpp_1jniKt_nativeCompletionInit(JNIEnv *env, 
 }
 extern "C"
 JNIEXPORT jstring JNICALL
-Java_org_pinelang_inferencekt_Llamacpp_1jniKt_nativeCompletionLoop(
+Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_nativeCompletionLoop(
         JNIEnv *env,
         jclass,
         jlong context_pointer,
@@ -269,6 +269,6 @@ Java_org_pinelang_inferencekt_Llamacpp_1jniKt_nativeCompletionLoop(
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_org_pinelang_inferencekt_Llamacpp_1jniKt_nativeKvCacheClear(JNIEnv *env, jclass clazz, jlong context) {
+Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_nativeKvCacheClear(JNIEnv *env, jclass clazz, jlong context) {
     llama_kv_cache_clear(reinterpret_cast<llama_context *>(context));
 }

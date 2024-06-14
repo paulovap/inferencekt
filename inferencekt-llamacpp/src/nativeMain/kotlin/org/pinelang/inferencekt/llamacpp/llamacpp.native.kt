@@ -1,12 +1,17 @@
 package org.pinelang.inferencekt.llamacpp
 
+import inferencekt_llamacpp.*
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.cstr
+import kotlinx.cinterop.toKString
+import kotlinx.cinterop.toLong
 import org.pinelang.inferencekt.Content
 import org.pinelang.inferencekt.InferenceParams
 import org.pinelang.inferencekt.Model
 import org.pinelang.inferencekt.Role
 
 actual fun platformInitBackend() {
-    TODO("Not yet implemented")
+    init_llama_backend()
 }
 
 actual fun platformCreateDefaultModel(): Model {
@@ -36,40 +41,30 @@ override val config: InferenceParams = InferenceParams()): Model {
     }
 }
 
-actual fun platformLoadModel(modelPath: String): Long {
-    TODO("Not yet implemented")
-}
+actual fun platformLoadModel(modelPath: String): Long = platform_load_model(modelPath).toLong()
 
-actual fun platformNewContext(model: Long): Long {
-    TODO("Not yet implemented")
-}
+actual fun platformNewContext(model: Long): Long = platform_new_context(model)
 
 actual fun platformNewBatch(
     nTokens: Int,
     embd: Int,
     nSeqMax: Int
-): Long {
-    TODO("Not yet implemented")
-}
+): Long = platform_new_batch(nTokens, embd, nSeqMax)
 
 actual fun platformCompletionLoop(
     context: Long,
     batch: Long,
     nLen: Int,
     ncur: IntVar
-): String? {
-    TODO("Not yet implemented")
-}
+): String? = platform_completion_loop(context, batch, nLen, ncur.value)?.toKString()
 
 actual fun platformCompletionInit(
     context: Long,
     batch: Long,
     prompt: String,
     nLen: Int
-): Int {
-    TODO("Not yet implemented")
-}
+): Int = platform_completion_init(context, batch, prompt, nLen)
 
-actual fun platformKvCacheClear(context: Long) {
-    TODO("Not yet implemented")
+actual fun platformKvCacheClear(context: Long){
+    platform_kv_cache_clear(context)
 }

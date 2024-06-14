@@ -1,6 +1,11 @@
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.Executable
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBinary
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
+import org.jetbrains.kotlin.gradle.plugin.mpp.TestExecutable
+import org.jetbrains.kotlin.konan.target.linker
 import java.nio.file.Files
 
 plugins {
@@ -21,7 +26,12 @@ kotlin {
     }
 
     listOf(
-        jvm(),
+        jvm() {
+            tasks.getByName("compileKotlinJvm") {
+                println("${this@getByName}: DEPENDS on ${targetName}.runCMake")
+                this@getByName.dependsOn("${targetName}.runCMake")
+            }
+        },
         linuxX64() {
             binaries {
                 executable()
@@ -48,6 +58,7 @@ kotlin {
                     ?: throw GradleException("JAVA_HOME must be set on your environment!")
             }
             doFirst {
+                println("Running CMAKE JOB $targetName $platformType")
                 Files.createDirectories(wDir.toPath())
             }
             doLast {
@@ -99,6 +110,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
 
         val jniMain by creating
@@ -115,14 +127,17 @@ kotlin {
 
     targets.withType<KotlinNativeTarget> {
         val main by compilations.getting
-
         main.cinterops {
             create("llamacpp") {
                 defFile(file("src/nativeInterop/cinterop/llamakt.def"))
+                headers("src/jniMain/cpp/llamakt_nojni.h", "build/clib/linuxX64/_deps/llama-src/llama.h", "build/clib/linuxX64/_deps/llama-src/ggml.h")
+                includeDirs("src/jniMain/cpp/llamakt_nojni.h", "build/clib/linuxX64/_deps/llama-src/")
+                packageName("inferencekt_llamacpp")
             }
         }
         tasks.forEach {
             if (it.name.contains("cinterop")) {
+                println("GENERATING DEPENDENCY FOR TASK ${it.name} $targetName")
                 it.dependsOn("${targetName}.runCMake")
                 return@forEach
             }
@@ -131,10 +146,23 @@ kotlin {
 //            linkerOpts += "-Wl -v  -L/home/paulo/proj/pineai/inferencekt-llamacpp/build/clib/linuxX64 -lllamakt"
 //
 //        }
-        binaries.withType<Executable> {
+        binaries.withType<NativeBinary> {
             //TODO: sets the path to llamakt.so file. Maybe there is a better way to run
             // the binaries without setting the path here.
             linkerOpts += "-rpath=/home/paulo/proj/pineai/inferencekt-llamacpp/build/clib/linuxX64"
+            println("LINKING binary: $name")
+        }
+        targets.withType<KotlinNativeTargetWithTests<*>> {
+            binaries {
+                // Configure a separate test where code is compiled in release mode.
+                test(setOf(NativeBuildType.RELEASE))
+
+            }
+            testRuns {
+                create("release") {
+                    setExecutionSourceFrom(binaries.getByName("releaseTest") as TestExecutable)
+                }
+            }
         }
     }
 

@@ -1,8 +1,5 @@
-import kotlinx.cinterop.toKString
-import llamakt.hi
-
+import inferencekt_llamacpp.init_llama_backend
 
 fun main() {
-    val l = hi()?.toKString()
-    println("value $l")
+    init_llama_backend()
 }

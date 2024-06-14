@@ -1,3 +1,5 @@
-headers = llamakt_nojni.h
+#headers = llamakt_nojni.h
+# Path for compilation is the module folder
 compilerOpts= -Isrc/jniMain/cpp
+# Path for the executable is the root folder
 linkerOpts.linux = -Linferencekt-llamacpp/build/clib/linuxX64 -lllamacpp

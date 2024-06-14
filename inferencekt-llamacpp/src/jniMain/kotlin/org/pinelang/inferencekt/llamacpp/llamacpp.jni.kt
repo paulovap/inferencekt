@@ -27,7 +27,7 @@ private external fun nativeLoadModel(path: String): Long
 actual fun platformLoadModel(modelPath: String): Long = nativeLoadModel(modelPath)
 
 actual fun platformInitBackend() {
-    System.loadLibrary("llamakt")
+    System.loadLibrary("llamacpp")
     initLlamaBackend()
 }
 
