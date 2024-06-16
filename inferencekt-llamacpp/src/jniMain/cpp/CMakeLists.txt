@@ -20,6 +20,7 @@ if (("${CMAKE_SYSTEM_NAME}" STREQUAL "Android") AND (ANDROID_ABI STREQUAL "arm64
                 -O3
                 -fPIC
         )
+    add_compile_definitions("JNI=1")
 else()
 # CUDA IS NOT WORKING ON MY MACHINE, DISABLING FOR NOW
 #    FIND_PACKAGE(CUDAToolkit)
@@ -39,6 +40,7 @@ if(LLAMACPP_PLATFORM_TYPE STREQUAL "jvm")
     set(JAVA_AWT_INCLUDE_PATH NotNeeded)
     find_package(JNI REQUIRED)
     include_directories(${JNI_INCLUDE_DIRS})
+    add_compile_definitions("JNI=1")
 endif ()
 
 # Download llama.cpp inference backend
@@ -57,18 +59,11 @@ set_property(TARGET llama PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 
 
-# We only need the wrapper .so (llamacpp.so) if we are
-# on a jvm target
-if("${CMAKE_SYSTEM_NAME}" STREQUAL "Android" OR LLAMACPP_PLATFORM_TYPE STREQUAL "jvm")
-    add_library(${CMAKE_PROJECT_NAME} SHARED
+add_library(${CMAKE_PROJECT_NAME} SHARED
             # List C/C++ source files with relative paths to this CMakeLists.txt.
-            llamakt.cpp)
-else ()
-    add_library(${CMAKE_PROJECT_NAME} SHARED
-            # List C/C++ source files with relative paths to this CMakeLists.txt.
-            llamakt_nojni.h
-            llamakt_nojni.cpp)
-endif ()
+            llamakt.cpp
+        llamakt.h
+)
 
 if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Android")
     # Specifies libraries CMake should link to your target library. You

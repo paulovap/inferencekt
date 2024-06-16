@@ -130,8 +130,8 @@ kotlin {
         main.cinterops {
             create("llamacpp") {
                 defFile(file("src/nativeInterop/cinterop/llamakt.def"))
-                headers("src/jniMain/cpp/llamakt_nojni.h", "build/clib/linuxX64/_deps/llama-src/llama.h", "build/clib/linuxX64/_deps/llama-src/ggml.h")
-                includeDirs("src/jniMain/cpp/llamakt_nojni.h", "build/clib/linuxX64/_deps/llama-src/")
+                headers("src/jniMain/cpp/llamakt.h", "build/clib/linuxX64/_deps/llama-src/llama.h", "build/clib/linuxX64/_deps/llama-src/ggml.h")
+                includeDirs("src/jniMain/cpp/llamakt.h", "build/clib/linuxX64/_deps/llama-src/")
                 packageName("inferencekt_llamacpp")
             }
         }

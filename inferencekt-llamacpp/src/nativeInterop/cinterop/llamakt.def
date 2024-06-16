@@ -1,4 +1,4 @@
-#headers = llamakt_nojni.h
+#headers = llamakt.h
 # Path for compilation is the module folder
 compilerOpts= -Isrc/jniMain/cpp
 # Path for the executable is the root folder

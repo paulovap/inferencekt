@@ -97,6 +97,7 @@ class LlammaCPPInferenceEngine(): InferenceEngine {
                         val str =
                             platformCompletionLoop(pointers.context, pointers.batch, nlen, ncur)
                                 ?: break
+                        println(str)
                         emit(str)
                     }
                     platformKvCacheClear(pointers.context)
