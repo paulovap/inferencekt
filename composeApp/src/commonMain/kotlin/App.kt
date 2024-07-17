@@ -16,6 +16,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
@@ -44,6 +45,7 @@ fun App() {
     val scope = rememberCoroutineScope()
     MaterialTheme {
         Column(modifier = Modifier.verticalScroll(rememberScrollState()).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            ModelDebugText(inference.model)
             TextField(value = prompt,
                 onValueChange = { prompt = it })
             Button(onClick = {

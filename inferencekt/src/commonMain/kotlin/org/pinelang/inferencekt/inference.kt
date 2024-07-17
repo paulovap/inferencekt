@@ -44,12 +44,12 @@ interface InferenceEngine {
     val model: Model?
     val modelStatus: ModelStatus
 
-    suspend fun loadModel(model: Model): ModelStatus
+    suspend fun loadModel(model: Model, inferenceParams: InferenceParams = InferenceParams()): ModelStatus
     suspend fun generateText(prompt: String): Flow<String>
 }
 
 class LocalInferenceLoader(
-    private val model: Model,
+    val model: Model,
     private val inferenceEngine: InferenceEngine
 ): GenText {
     val modelStatus get() = inferenceEngine.modelStatus

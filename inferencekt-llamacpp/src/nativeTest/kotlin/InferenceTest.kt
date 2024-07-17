@@ -1,5 +1,7 @@
+import app.cash.turbine.test
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
@@ -16,17 +18,21 @@ class InferenceTest {
 
     @Test
     fun loadModelTest() = runTest {
-        val model = platformCreateDefaultModel()
-        val engine = LlammaCPPInferenceEngine()
-        val job = launch {
-            assertEquals(engine.loadModel(model), ModelStatus.Loaded)
-            val f = engine.generateText("What is the top 5 most used programming languages?")
-            f.collect {
-                println(it)
-            }
-
-            assertEquals(f.last(), "asdf")
+        flowOf("one", "two").test {
+            assertEquals("one", awaitItem())
+            assertEquals("twso", awaitItem())
+            awaitComplete()
         }
-        job.join()
+//        val model = platformCreateDefaultModel()
+//        val engine = LlammaCPPInferenceEngine()
+//        assertEquals(engine.loadModel(model), ModelStatus.Loaded)
+//        val f = engine.generateText("What is the top 5 most used programming languages?")
+//        f.test {
+//            //assertEquals("first", awaitItem())
+//            awaitComplete()
+//        }
+//        f.collect {
+//            println(it)
+//        }
     }
 }

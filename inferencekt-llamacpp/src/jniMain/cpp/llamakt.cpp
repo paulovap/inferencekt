@@ -16,8 +16,6 @@
 #define LOGe(...) printf(__VA_ARGS__)
 #endif // __ANDROID__
 
-std::string cached_token_chars;
-
 bool is_valid_utf8(const char * string) {
     if (!string) {
         return true;
@@ -61,8 +59,8 @@ void init_llama_backend() {
 
 llama_model *platform_load_model(const char* path) {
     llama_model_params model_params = llama_model_default_params();
-    model_params.n_gpu_layers = 33;
     auto model = llama_load_model_from_file(path, model_params);
+
     return model;
 }
 
@@ -78,7 +76,7 @@ llama_context *platform_new_context(llama_model* model) {
 
     llama_context_params ctx_params = llama_context_default_params();
     ctx_params.seed  = 1234;
-    ctx_params.n_ctx = 2048;
+    ctx_params.n_ctx = 512;
     ctx_params.n_threads       = n_threads;
     ctx_params.n_threads_batch = n_threads;
     //ctx_params.flash_attn = true;
@@ -87,14 +85,14 @@ llama_context *platform_new_context(llama_model* model) {
 
     if (!context) {
         LOGe("llama_new_context_with_model() returned null)");
-        return 0;
+        return nullptr;
     }
 
     return context;
 }
 
 llama_batch * platform_new_batch(int n_tokens, int embd, int n_seq_max){
-    llama_batch *batch = new llama_batch {
+    auto batch = new llama_batch {
             0,
             nullptr,
             nullptr,
@@ -124,66 +122,7 @@ llama_batch * platform_new_batch(int n_tokens, int embd, int n_seq_max){
     return batch;
 }
 
-const char* platform_completion_loop(struct llama_context* context, struct llama_batch *batch, int n_len, int n_cur) {
-    const auto model = llama_get_model(context);
-    LOGe("platform_completion_loop() entrou n_len %d n_cur %d", n_len, n_cur);
-    auto n_vocab = llama_n_vocab(model);
-    auto logits = llama_get_logits_ith(context, batch->n_tokens - 1);
-
-    std::vector<llama_token_data> candidates;
-    candidates.reserve(n_vocab);
-
-    for (llama_token token_id = 0; token_id < n_vocab; token_id++) {
-        candidates.emplace_back(llama_token_data{ token_id, logits[token_id], 0.0f });
-    }
-
-    llama_token_data_array candidates_p = { candidates.data(), candidates.size(), false };
-
-// sample the most likely token
-    const auto new_token_id = llama_sample_token_greedy(context, &candidates_p);
-
-    if (llama_token_is_eog(model, new_token_id)) {
-        const auto timings = llama_get_timings(context);
-        LOGe("\n");
-        LOGe("%s:        load time = %10.2f ms\n", __func__, timings.t_load_ms);
-        LOGe("%s:      sample time = %10.2f ms / %5d runs   (%8.2f ms per token, %8.2f tokens per second)\n",
-             __func__, timings.t_sample_ms, timings.n_sample, timings.t_sample_ms / timings.n_sample, 1e3 / timings.t_sample_ms * timings.n_sample);
-        LOGe("%s: prompt eval time = %10.2f ms / %5d tokens (%8.2f ms per token, %8.2f tokens per second)\n",
-             __func__, timings.t_p_eval_ms, timings.n_p_eval, timings.t_p_eval_ms / timings.n_p_eval, 1e3 / timings.t_p_eval_ms * timings.n_p_eval);
-        LOGe("%s:        eval time = %10.2f ms / %5d runs   (%8.2f ms per token, %8.2f tokens per second)\n",
-             __func__, timings.t_eval_ms, timings.n_eval, timings.t_eval_ms / timings.n_eval, 1e3 / timings.t_eval_ms * timings.n_eval);
-        LOGe("%s:       total time = %10.2f ms / %5d tokens\n", __func__, (timings.t_end_ms - timings.t_start_ms), (timings.n_p_eval + timings.n_eval));
-        return nullptr;
-    }
-
-    auto new_token_chars = llama_token_to_piece(context, new_token_id);
-    cached_token_chars += new_token_chars;
-
-    std::string new_token;
-    if (is_valid_utf8(cached_token_chars.c_str())) {
-        new_token = cached_token_chars;
-        LOGi("cached: %s, new_token_chars: `%s`, id: %d", cached_token_chars.c_str(), new_token_chars.c_str(), new_token_id);
-        cached_token_chars.clear();
-        LOGe("platform_completion_loop() valid %s", new_token.c_str());
-    } else {
-        LOGe("platform_completion_loop() not valid UTF*");
-        new_token = "";
-    }
-
-    llama_batch_clear(*batch);
-    llama_batch_add(*batch, new_token_id, n_cur, { 0 }, true);
-
-
-    if (llama_decode(context, *batch) != 0) {
-        LOGe("llama_decode() returned null");
-    }
-
-    //#todo is it possible to avoid this copy?
-    return strdup(new_token.c_str());
-}
-
 int platform_completion_init(struct llama_context* context, struct llama_batch *batch, const char* text, int n_len) {
-    cached_token_chars.clear();
     const auto tokens_list = llama_tokenize(context, text, 1);
 
     auto n_ctx = llama_n_ctx(context);
@@ -214,6 +153,57 @@ int platform_completion_init(struct llama_context* context, struct llama_batch *
     }
 
     return batch->n_tokens;
+}
+
+const char* platform_completion_loop(struct llama_context* context, struct llama_batch *batch, int n_len, int n_cur) {
+    const auto model = llama_get_model(context);
+    auto n_vocab = llama_n_vocab(model);
+    auto logits = llama_get_logits_ith(context, batch->n_tokens - 1);
+
+    std::vector<llama_token_data> candidates;
+    candidates.reserve(n_vocab);
+
+    for (llama_token token_id = 0; token_id < n_vocab; token_id++) {
+        candidates.emplace_back(llama_token_data{ token_id, logits[token_id], 0.0f });
+    }
+
+    llama_token_data_array candidates_p = { candidates.data(), candidates.size(), false };
+
+// sample the most likely token
+    const auto new_token_id = llama_sample_token_greedy(context, &candidates_p);
+
+    //TODO: find a way to increment n_cur and keep the state somewhere.
+    if (llama_token_is_eog(model, new_token_id) || n_cur == n_len) {
+        const auto timings = llama_get_timings(context);
+        LOGe("\n");
+        LOGe("%s:        load time = %10.2f ms\n", __func__, timings.t_load_ms);
+        LOGe("%s:      sample time = %10.2f ms / %5d runs   (%8.2f ms per token, %8.2f tokens per second)\n",
+             __func__, timings.t_sample_ms, timings.n_sample, timings.t_sample_ms / timings.n_sample, 1e3 / timings.t_sample_ms * timings.n_sample);
+        LOGe("%s: prompt eval time = %10.2f ms / %5d tokens (%8.2f ms per token, %8.2f tokens per second)\n",
+             __func__, timings.t_p_eval_ms, timings.n_p_eval, timings.t_p_eval_ms / timings.n_p_eval, 1e3 / timings.t_p_eval_ms * timings.n_p_eval);
+        LOGe("%s:        eval time = %10.2f ms / %5d runs   (%8.2f ms per token, %8.2f tokens per second)\n",
+             __func__, timings.t_eval_ms, timings.n_eval, timings.t_eval_ms / timings.n_eval, 1e3 / timings.t_eval_ms * timings.n_eval);
+        LOGe("%s:       total time = %10.2f ms / %5d tokens\n", __func__, (timings.t_end_ms - timings.t_start_ms), (timings.n_p_eval + timings.n_eval));
+        return nullptr;
+    }
+
+    auto new_token_chars = llama_token_to_piece(context, new_token_id);
+
+    if (is_valid_utf8(new_token_chars.c_str())) {
+        LOGi("id: %d, token: `%s`\n", new_token_id, new_token_chars.c_str());
+    } else {
+        LOGe("platform_completion_loop() not valid UTF*");
+    }
+
+    llama_batch_clear(*batch);
+    llama_batch_add(*batch, new_token_id, n_cur, { 0 }, true);
+
+    if (llama_decode(context, *batch) != 0) {
+        LOGe("llama_decode() returned null");
+    }
+
+    //#todo is it possible to avoid this copy?
+    return strdup(new_token_chars.c_str());
 }
 
 void platform_kv_cache_clear(struct llama_context *context) {

@@ -18,6 +18,7 @@ class DesktopModel(
 ): Model {
 
     override fun formatContent(content: Content): String {
+        // <|user|>\nHow to explain Internet for a medieval knight?\n<|end|>\n<|assistant|>
         val stringBuffer = StringBuffer()
         content.chat.forEach {
             when (it.role) {
@@ -26,10 +27,10 @@ class DesktopModel(
                 Role.System -> stringBuffer.append("<|system|>\n")
             }
             stringBuffer.append(it.content)
-            stringBuffer.append("<|end|>")
+            stringBuffer.append("\n<|end|>")
         }
         //TODO: move the leading part to make it optional
-        stringBuffer.append("<|assistant|>")
+        stringBuffer.append("\n<|assistant|>")
         return stringBuffer.toString()
     }
 }

@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.newSingleThreadContext
 import org.pinelang.inferencekt.InferenceEngine
+import org.pinelang.inferencekt.InferenceParams
 import org.pinelang.inferencekt.Model
 import org.pinelang.inferencekt.ModelStatus
 
@@ -44,7 +45,7 @@ class LlammaCPPInferenceEngine(): InferenceEngine {
     override val modelStatus: ModelStatus
         get() = _modelStatus
     private var _modelStatus: ModelStatus = ModelStatus.Idle
-    private val nlen = 512
+    private val nlen = 68
     private var pointers = LlamainternalPointers()
     private val runLoop: CoroutineDispatcher = newSingleThreadContext("lammathread")
 
@@ -52,7 +53,7 @@ class LlammaCPPInferenceEngine(): InferenceEngine {
         platformInitBackend()
     }
 
-    override suspend fun loadModel(model: Model): ModelStatus {
+    override suspend fun loadModel(model: Model, inferenceParams: InferenceParams): ModelStatus {
         val nativeModel = platformLoadModel(model.modelPath)
         if (nativeModel == 0L){
             _modelStatus = ModelStatus.Error(IllegalStateException("load_model() failed"))
@@ -97,7 +98,6 @@ class LlammaCPPInferenceEngine(): InferenceEngine {
                         val str =
                             platformCompletionLoop(pointers.context, pointers.batch, nlen, ncur)
                                 ?: break
-                        println(str)
                         emit(str)
                     }
                     platformKvCacheClear(pointers.context)

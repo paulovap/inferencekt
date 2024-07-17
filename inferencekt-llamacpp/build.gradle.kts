@@ -1,10 +1,13 @@
+import org.jetbrains.kotlin.gradle.plugin.JvmClasspathTestRunSource
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.plugin.KotlinTargetWithTests
 import org.jetbrains.kotlin.gradle.plugin.mpp.Executable
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBinary
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.gradle.plugin.mpp.TestExecutable
+import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 import org.jetbrains.kotlin.konan.target.linker
 import java.nio.file.Files
 
@@ -111,6 +114,7 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.turbine)
         }
 
         val jniMain by creating
@@ -124,7 +128,6 @@ kotlin {
 //            dependsOn(appleMain)
 //        }
     }
-
     targets.withType<KotlinNativeTarget> {
         val main by compilations.getting
         main.cinterops {
@@ -152,16 +155,22 @@ kotlin {
             linkerOpts += "-rpath=/home/paulo/proj/pineai/inferencekt-llamacpp/build/clib/linuxX64"
             println("LINKING binary: $name")
         }
-        targets.withType<KotlinNativeTargetWithTests<*>> {
-            binaries {
-                // Configure a separate test where code is compiled in release mode.
-                test(setOf(NativeBuildType.RELEASE))
+    }
+    targets.getByName("jvm") {
+        tasks.withType<Test>().configureEach {
+            val llamacppProject = project(":inferencekt-llamacpp")
+            jvmArgs("-Djava.library.path=${llamacppProject.layout.buildDirectory.get().asFile.toPath()}/clib/jvm")
+        }
+    }
+    targets.withType<KotlinNativeTargetWithTests<*>> {
+        binaries {
+            // Configure a separate test where code is compiled in release mode.
+            test(setOf(NativeBuildType.RELEASE))
 
-            }
-            testRuns {
-                create("release") {
-                    setExecutionSourceFrom(binaries.getByName("releaseTest") as TestExecutable)
-                }
+        }
+        testRuns {
+            create("release") {
+                setExecutionSourceFrom(binaries.getByName("releaseTest") as TestExecutable)
             }
         }
     }
