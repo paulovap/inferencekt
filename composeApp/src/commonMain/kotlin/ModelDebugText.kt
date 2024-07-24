@@ -11,11 +11,17 @@ import androidx.compose.material.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import co.touchlab.kermit.Logger
+import org.pinelang.inferencekt.InferenceEngine
+import org.pinelang.inferencekt.llamacpp.platformTokensPerSecond
 
 @Preview
 @Composable
-fun ModelDebugText(model: Model) {
+fun ModelDebugText(inference: InferenceEngine) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text=model.modelName, color = Color.Red)
+        var text = "Model: ${inference.model?.modelName ?: "Not loaded"}"
+        val ts = (inference.tokensPerSecond * 10).toInt()
+        text += if (ts != 0) " Tokens per second: ${ts/10}.${ts.mod(10)} t/s" else ""
+        Text(text=text, color = Color.Red)
     }
 }

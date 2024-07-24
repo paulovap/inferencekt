@@ -24,8 +24,9 @@ interface GenText {
 }
 
 sealed class ModelStatus {
-    data object Idle: ModelStatus()
+    data object Unloaded: ModelStatus()
     data object Loaded: ModelStatus()
+    data object Generating: ModelStatus()
     data class Error(val exception: Exception): ModelStatus()
 }
 
@@ -43,19 +44,20 @@ interface Model
 interface InferenceEngine {
     val model: Model?
     val modelStatus: ModelStatus
-
+    val tokensPerSecond: Double
     suspend fun loadModel(model: Model, inferenceParams: InferenceParams = InferenceParams()): ModelStatus
+    suspend fun unloadModel();
     suspend fun generateText(prompt: String): Flow<String>
 }
 
 class LocalInferenceLoader(
     val model: Model,
-    private val inferenceEngine: InferenceEngine
+    val inferenceEngine: InferenceEngine
 ): GenText {
     val modelStatus get() = inferenceEngine.modelStatus
 
     suspend fun loadModel(): ModelStatus {
-        if (inferenceEngine.modelStatus != ModelStatus.Idle) {
+        if (inferenceEngine.modelStatus != ModelStatus.Unloaded) {
             return ModelStatus.Error(IllegalStateException("Model already Loaded"))
         }
         return inferenceEngine.loadModel(model)

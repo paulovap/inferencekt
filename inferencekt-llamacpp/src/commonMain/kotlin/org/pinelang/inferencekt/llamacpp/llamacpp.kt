@@ -16,20 +16,15 @@ import org.pinelang.inferencekt.ModelStatus
 expect fun platformCreateDefaultModel(): Model
 expect fun platformInitBackend()
 expect fun platformLoadModel(modelPath: String): Long
+expect fun platformUnloadModel(model: Long): Unit
 expect fun platformNewContext(model: Long): Long
+expect fun platformDeleteContext(context: Long): Unit
 expect fun platformNewBatch(nTokens: Int, embd: Int, nSeqMax: Int): Long
-expect fun platformCompletionLoop(context: Long, batch: Long, nLen: Int, ncur: IntVar): String?
+expect fun platformDeleteBatch(batch: Long): Unit
+expect fun platformCompletionLoop(context: Long, batch: Long, nLen: Int, ncur: Int): String?
 expect fun platformCompletionInit(context: Long, batch: Long, prompt: String, nLen: Int): Int
 expect fun platformKvCacheClear(context: Long)
-
-class IntVar(value: Int) {
-    var value: Int = value
-        private set
-
-    fun inc() {
-        value += 1
-    }
-}
+expect fun platformTokensPerSecond(context: Long): Double
 
 data class LlamainternalPointers(
     val model: Long = 0,
@@ -44,10 +39,16 @@ class LlammaCPPInferenceEngine(): InferenceEngine {
 
     override val modelStatus: ModelStatus
         get() = _modelStatus
-    private var _modelStatus: ModelStatus = ModelStatus.Idle
-    private val nlen = 68
+    private var _modelStatus: ModelStatus = ModelStatus.Unloaded
+    private val nlen = 512
     private var pointers = LlamainternalPointers()
     private val runLoop: CoroutineDispatcher = newSingleThreadContext("lammathread")
+
+    override val tokensPerSecond: Double
+        get() {
+            val ts = platformTokensPerSecond(pointers.context)
+            return if (ts > 0) ts else 0.0
+        }
 
     init {
         platformInitBackend()
@@ -77,6 +78,10 @@ class LlammaCPPInferenceEngine(): InferenceEngine {
         return modelStatus
     }
 
+    override suspend fun unloadModel() {
+        TODO("Not yet implemented")
+    }
+
     /**
      * Each model has a different input formats, so we need to apply the template
      * based on the implemented model.
@@ -86,20 +91,23 @@ class LlammaCPPInferenceEngine(): InferenceEngine {
         return flow {
             when (modelStatus) {
                 is ModelStatus.Loaded -> {
-                    val ncur = IntVar(
-                        platformCompletionInit(
+                    _modelStatus = ModelStatus.Generating
+                    var ncur = platformCompletionInit(
                             pointers.context,
                             pointers.batch,
                             prompt,
                             nlen
-                        )
                     )
-                    while (ncur.value <= nlen) {
-                        val str =
-                            platformCompletionLoop(pointers.context, pointers.batch, nlen, ncur)
-                                ?: break
+                    while (ncur <= nlen) {
+                        val str = platformCompletionLoop(pointers.context, pointers.batch, nlen, ncur)
+                        if (str == null) {
+                            Logger.i { "Reached EOS, stopping..." }
+                            break
+                        }
+                        ncur+=1
                         emit(str)
                     }
+                    _modelStatus = ModelStatus.Loaded
                     platformKvCacheClear(pointers.context)
                 }
 

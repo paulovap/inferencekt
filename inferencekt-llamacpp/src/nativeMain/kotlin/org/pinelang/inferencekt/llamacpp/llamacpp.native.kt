@@ -44,7 +44,11 @@ override val config: InferenceParams = InferenceParams()): Model {
 
 actual fun platformLoadModel(modelPath: String): Long = platform_load_model(modelPath).toLong()
 
+actual fun platformUnloadModel(model: Long): Unit = platform_unload_model(model.toCPointer())
+
 actual fun platformNewContext(model: Long): Long = platform_new_context(model.toCPointer()).toLong()
+
+actual fun platformDeleteContext(context: Long): Unit = platform_delete_context(context.toCPointer())
 
 actual fun platformNewBatch(
     nTokens: Int,
@@ -52,12 +56,14 @@ actual fun platformNewBatch(
     nSeqMax: Int
 ): Long = platform_new_batch(nTokens, embd, nSeqMax).toLong()
 
+actual fun platformDeleteBatch(batch: Long): Unit = platform_delete_batch(batch.toCPointer())
+
 actual fun platformCompletionLoop(
     context: Long,
     batch: Long,
     nLen: Int,
-    ncur: IntVar
-): String? = platform_completion_loop(context.toCPointer(), batch.toCPointer(), nLen, ncur.value)?.toKString()
+    ncur: Int
+): String? = platform_completion_loop(context.toCPointer(), batch.toCPointer(), nLen, ncur)?.toKString()
 
 actual fun platformCompletionInit(
     context: Long,
@@ -68,4 +74,8 @@ actual fun platformCompletionInit(
 
 actual fun platformKvCacheClear(context: Long){
     platform_kv_cache_clear(context.toCPointer())
+}
+
+actual fun platformTokensPerSecond(context: Long): Double {
+    platform_tokens_per_second(context.toCPointer())
 }

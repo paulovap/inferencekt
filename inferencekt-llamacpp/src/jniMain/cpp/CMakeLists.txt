@@ -13,7 +13,6 @@ project("llamacpp")
 
 option(LLAMACPP_PLATFORM_TYPE "LLAMACPP_PLATFORM_TYPE" "")
 
-
 if (("${CMAKE_SYSTEM_NAME}" STREQUAL "Android") AND (ANDROID_ABI STREQUAL "arm64-v8a"))
     add_compile_options(
                 -march=armv8.4-a+fp16+dotprod
@@ -48,7 +47,7 @@ include(FetchContent)
 FetchContent_Declare(
         llama
         GIT_REPOSITORY https://github.com/ggerganov/llama.cpp
-        GIT_TAG 1ea2a00
+        GIT_TAG b3452
         GIT_SHALLOW 1
 )
 FetchContent_MakeAvailable(llama)
@@ -61,7 +60,7 @@ set_property(TARGET llama PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 add_library(${CMAKE_PROJECT_NAME} SHARED
             # List C/C++ source files with relative paths to this CMakeLists.txt.
-            llamakt.cpp
+        llamakt.cpp
         llamakt.h
 )
 

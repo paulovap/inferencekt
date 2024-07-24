@@ -25,6 +25,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.pinelang.inferencekt.Chat
 import org.pinelang.inferencekt.Content
 import org.pinelang.inferencekt.LocalInferenceLoader
+import org.pinelang.inferencekt.ModelStatus
 import org.pinelang.inferencekt.Role
 import org.pinelang.inferencekt.llamacpp.LlammaCPPInferenceEngine
 import org.pinelang.inferencekt.llamacpp.platformCreateDefaultModel
@@ -45,7 +46,7 @@ fun App() {
     val scope = rememberCoroutineScope()
     MaterialTheme {
         Column(modifier = Modifier.verticalScroll(rememberScrollState()).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            ModelDebugText(inference.model)
+            ModelDebugText(inference.inferenceEngine)
             TextField(value = prompt,
                 onValueChange = { prompt = it })
             Button(onClick = {
@@ -63,8 +64,9 @@ fun App() {
                         stringState.value += it
                     }
                 }
-            }) {
-                Text("load model")
+            },
+                enabled = inference.modelStatus != ModelStatus.Generating) {
+                Text("Generate")
             }
             Text(stringState.value)
         }

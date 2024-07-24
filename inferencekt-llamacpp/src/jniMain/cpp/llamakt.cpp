@@ -1,8 +1,8 @@
 #include <string>
 #include <cstdio>
-#include "llama.h"
-#include "common/common.h"
+#include <iostream>
 #include "llamakt.h"
+#include "common.h"
 
 #ifdef __ANDROID__
 #include <android/log.h>
@@ -12,7 +12,7 @@
 #define LOGi(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 #define LOGe(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 #else
-#define LOGi(...) printf(__VA_ARGS__)
+#define LOGi(...) fprintf(stdout, __VA_ARGS__)
 #define LOGe(...) printf(__VA_ARGS__)
 #endif // __ANDROID__
 
@@ -60,15 +60,18 @@ void init_llama_backend() {
 llama_model *platform_load_model(const char* path) {
     llama_model_params model_params = llama_model_default_params();
     auto model = llama_load_model_from_file(path, model_params);
-
     return model;
+}
+
+void platform_unload_model(struct llama_model * model) {
+    llama_free_model(model);
 }
 
 llama_context *platform_new_context(llama_model* model) {
 
     if (!model) {
         LOGe("new_context(): model cannot be null");
-        return 0;
+        return nullptr;
     }
 
     int n_threads = std::max(1, 4);
@@ -76,7 +79,7 @@ llama_context *platform_new_context(llama_model* model) {
 
     llama_context_params ctx_params = llama_context_default_params();
     ctx_params.seed  = 1234;
-    ctx_params.n_ctx = 512;
+    ctx_params.n_ctx = 1024;
     ctx_params.n_threads       = n_threads;
     ctx_params.n_threads_batch = n_threads;
     //ctx_params.flash_attn = true;
@@ -89,6 +92,10 @@ llama_context *platform_new_context(llama_model* model) {
     }
 
     return context;
+}
+
+void platform_delete_context(llama_context * context) {
+    llama_free(context);
 }
 
 llama_batch * platform_new_batch(int n_tokens, int embd, int n_seq_max){
@@ -120,6 +127,11 @@ llama_batch * platform_new_batch(int n_tokens, int embd, int n_seq_max){
     batch->logits   = (int8_t *)        malloc(sizeof(int8_t)         * n_tokens);
 
     return batch;
+}
+
+void platform_delete_batch(llama_batch * batch) {
+    llama_batch_free(*batch);
+    delete batch;
 }
 
 int platform_completion_init(struct llama_context* context, struct llama_batch *batch, const char* text, int n_len) {
@@ -174,25 +186,14 @@ const char* platform_completion_loop(struct llama_context* context, struct llama
 
     //TODO: find a way to increment n_cur and keep the state somewhere.
     if (llama_token_is_eog(model, new_token_id) || n_cur == n_len) {
-        const auto timings = llama_get_timings(context);
-        LOGe("\n");
-        LOGe("%s:        load time = %10.2f ms\n", __func__, timings.t_load_ms);
-        LOGe("%s:      sample time = %10.2f ms / %5d runs   (%8.2f ms per token, %8.2f tokens per second)\n",
-             __func__, timings.t_sample_ms, timings.n_sample, timings.t_sample_ms / timings.n_sample, 1e3 / timings.t_sample_ms * timings.n_sample);
-        LOGe("%s: prompt eval time = %10.2f ms / %5d tokens (%8.2f ms per token, %8.2f tokens per second)\n",
-             __func__, timings.t_p_eval_ms, timings.n_p_eval, timings.t_p_eval_ms / timings.n_p_eval, 1e3 / timings.t_p_eval_ms * timings.n_p_eval);
-        LOGe("%s:        eval time = %10.2f ms / %5d runs   (%8.2f ms per token, %8.2f tokens per second)\n",
-             __func__, timings.t_eval_ms, timings.n_eval, timings.t_eval_ms / timings.n_eval, 1e3 / timings.t_eval_ms * timings.n_eval);
-        LOGe("%s:       total time = %10.2f ms / %5d tokens\n", __func__, (timings.t_end_ms - timings.t_start_ms), (timings.n_p_eval + timings.n_eval));
+
         return nullptr;
     }
 
     auto new_token_chars = llama_token_to_piece(context, new_token_id);
 
-    if (is_valid_utf8(new_token_chars.c_str())) {
-        LOGi("id: %d, token: `%s`\n", new_token_id, new_token_chars.c_str());
-    } else {
-        LOGe("platform_completion_loop() not valid UTF*");
+    if (!is_valid_utf8(new_token_chars.c_str())) {
+        LOGe("platform_completion_loop() not valid UTF*: %d", new_token_id);
     }
 
     llama_batch_clear(*batch);
@@ -204,6 +205,22 @@ const char* platform_completion_loop(struct llama_context* context, struct llama
 
     //#todo is it possible to avoid this copy?
     return strdup(new_token_chars.c_str());
+}
+
+double platform_tokens_per_second(struct llama_context* context) {
+    if (context == nullptr)
+        return 0.0;
+    auto timings = llama_get_timings(context);
+    return 1e3 / timings.t_eval_ms * timings.n_eval;
+//    return std::format("10 = {}, 42 = {:10}\n", 10, 42);
+    LOGi("%s:        load time = %10.2f ms\n", __func__, timings.t_load_ms);
+    LOGi("%s:      sample time = %10.2f ms / %5d runs   (%8.2f ms per token, %8.2f tokens per second)\n",
+         __func__, timings.t_sample_ms, timings.n_sample, timings.t_sample_ms / timings.n_sample, 1e3 / timings.t_sample_ms * timings.n_sample);
+    LOGi("%s: prompt eval time = %10.2f ms / %5d tokens (%8.2f ms per token, %8.2f tokens per second)\n",
+         __func__, timings.t_p_eval_ms, timings.n_p_eval, timings.t_p_eval_ms / timings.n_p_eval, 1e3 / timings.t_p_eval_ms * timings.n_p_eval);
+    LOGi("%s:        eval time = %10.2f ms / %5d runs   (%8.2f ms per token, %8.2f tokens per second)\n",
+         __func__, timings.t_eval_ms, timings.n_eval, timings.t_eval_ms / timings.n_eval, 1e3 / timings.t_eval_ms * timings.n_eval);
+    LOGi("%s:       total time = %10.2f ms / %5d tokens\n", __func__, (timings.t_end_ms - timings.t_start_ms), (timings.n_p_eval + timings.n_eval));
 }
 
 void platform_kv_cache_clear(struct llama_context *context) {
@@ -242,6 +259,14 @@ Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_nativeLoadModel(JNIEnv *e
     }
     return reinterpret_cast<long>(model);
 }
+extern "C"
+JNIEXPORT void JNICALL
+Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_nativeUnloadModel(JNIEnv *env, jclass clazz, jlong jmodel) {
+    auto model = reinterpret_cast<llama_model *>(jmodel);
+    if (model) {
+        platform_unload_model(model);
+    }
+}
 
 extern "C"
 JNIEXPORT jlong JNICALL
@@ -257,10 +282,26 @@ Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_nativeNewContext(JNIEnv *
     return reinterpret_cast<long>(platform_new_context(model));
 }
 extern "C"
+JNIEXPORT void JNICALL
+Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_nativeDeleteContext(JNIEnv *env, jclass clazz, jlong jcontext) {
+    auto context = reinterpret_cast<llama_context *>(jcontext);
+    if (context) {
+        platform_delete_context(context);
+    }
+}
+extern "C"
 JNIEXPORT jlong JNICALL
 Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_nativeNewBatch(JNIEnv *env, jobject, jint n_tokens, jint embd,
                                               jint n_seq_max) {
     return reinterpret_cast<jlong>(platform_new_batch(n_tokens, embd, n_seq_max));
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_nativeDeleteBatch(JNIEnv *env, jclass clazz, jlong jbatch) {
+    auto batch = reinterpret_cast<llama_batch *>(jbatch);
+    if (batch) {
+        platform_delete_batch(batch);
+    }
 }
 extern "C"
 JNIEXPORT jint JNICALL
@@ -281,15 +322,10 @@ Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_nativeCompletionLoop(
         jlong context_pointer,
         jlong batch_pointer,
         jint n_len,
-        jobject intvar_ncur) {
+        jint n_cur) {
     const auto context = reinterpret_cast<llama_context *>(context_pointer);
     const auto batch = reinterpret_cast<llama_batch *>(batch_pointer);
     const auto model = llama_get_model(context);
-
-    if (!la_int_var) la_int_var = env->GetObjectClass(intvar_ncur);
-    if (!la_int_var_value) la_int_var_value = env->GetMethodID(la_int_var, "getValue", "()I");
-    if (!la_int_var_inc) la_int_var_inc = env->GetMethodID(la_int_var, "inc", "()V");
-    const auto n_cur = env->CallIntMethod(intvar_ncur, la_int_var_value);
     auto result = platform_completion_loop(context, batch, n_len, n_cur);
     return env->NewStringUTF(result);
 }
@@ -298,6 +334,12 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_nativeKvCacheClear(JNIEnv *env, jclass clazz, jlong context) {
     llama_kv_cache_clear(reinterpret_cast<llama_context *>(context));
+}
+
+extern "C"
+JNIEXPORT jdouble JNICALL
+Java_org_pinelang_inferencekt_llamacpp_Llamacpp_1jniKt_nativeTokenPerSecond(JNIEnv *env, jclass clazz, jlong context) {
+    return platform_tokens_per_second(reinterpret_cast<llama_context *>(context));
 }
 
 #endif // JNI

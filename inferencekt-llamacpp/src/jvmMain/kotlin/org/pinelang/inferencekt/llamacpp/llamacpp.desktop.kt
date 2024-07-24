@@ -12,7 +12,7 @@ actual fun platformCreateDefaultModel(): Model {
 // /data/data/org.pinelang.pineai/files/Phi-3-mini-4k-instruct-q4.gguf
 class DesktopModel(
     override val modelName: String = "Phi-3-mini-4k-instruct-q4.gguf",
-    override val modelPath: String = "/home/paulo/Downloads/$modelName",
+    override val modelPath: String = "/Users/ppinheiro/git_tree/pineai/models/$modelName",
     override val isLocal: Boolean = true,
     override val config: InferenceParams = InferenceParams()
 ): Model {
