@@ -25,7 +25,7 @@ extern "C" {
     const char* platform_completion_loop(struct llama_context *context, struct llama_batch *batch, int n_len, int n_cur);
     int platform_completion_init(struct llama_context * context, struct llama_batch * batch, const char* prompt, int n_len);
     void platform_kv_cache_clear(struct llama_context * context);
-    const char* platform_timings_as_string(struct llama_context* context);
+    double platform_tokens_per_second(struct llama_context* context);
 
 #ifdef __cplusplus
 }

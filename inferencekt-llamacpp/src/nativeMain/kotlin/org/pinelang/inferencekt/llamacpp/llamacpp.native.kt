@@ -77,5 +77,5 @@ actual fun platformKvCacheClear(context: Long){
 }
 
 actual fun platformTokensPerSecond(context: Long): Double {
-    platform_tokens_per_second(context.toCPointer())
+    return platform_tokens_per_second(context.toCPointer())
 }

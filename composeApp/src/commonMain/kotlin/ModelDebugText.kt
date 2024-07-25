@@ -21,7 +21,7 @@ fun ModelDebugText(inference: InferenceEngine) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         var text = "Model: ${inference.model?.modelName ?: "Not loaded"}"
         val ts = (inference.tokensPerSecond * 10).toInt()
-        text += if (ts != 0) " Tokens per second: ${ts/10}.${ts.mod(10)} t/s" else ""
+        text += if (ts != 0) "\nTokens per second: ${ts/10}.${ts.mod(10)} t/s" else ""
         Text(text=text, color = Color.Red)
     }
 }
